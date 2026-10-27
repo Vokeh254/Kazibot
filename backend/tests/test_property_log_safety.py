@@ -79,7 +79,7 @@ api_key_st = st.text(min_size=4, max_size=100)
 
 
 @given(api_key=api_key_st)
-@settings(max_examples=50)
+@settings(max_examples=50, deadline=None)
 def test_api_key_never_appears_in_logs(api_key: str) -> None:
     """
     # Feature: kazibot, Property 13: API key never appears in log output
@@ -96,7 +96,11 @@ def test_api_key_never_appears_in_logs(api_key: str) -> None:
 
     All three code paths are exercised with a single captured log handler
     attached to the relevant loggers before execution and removed after.
+    ``deadline=None`` is set because provider initialisation on cold runs can
+    exceed the default 200 ms Hypothesis deadline.
     """
+    import backend.routers.profile as profile_module
+
     handler = _CapturingHandler()
     loggers = _attach_handler_to_loggers(handler)
 
@@ -104,23 +108,20 @@ def test_api_key_never_appears_in_logs(api_key: str) -> None:
 
     try:
         # ── Code path 1: encryption (from profile router) ─────────────────────
-        with patch("backend.routers.profile.settings") as mock_settings:
-            mock_settings.FERNET_KEY = fresh_key
-            # Re-import the private helper with the patched settings applied.
-            # Because _fernet is module-level, we monkey-patch it directly.
-            import backend.routers.profile as profile_module
-            original_fernet = profile_module._fernet
-            profile_module._fernet = Fernet(fresh_key.encode())
-            try:
-                _ciphertext = profile_module._encrypt_key(api_key)
-            finally:
-                profile_module._fernet = original_fernet
+        # Swap the module-level Fernet instance for a fresh one so we don't
+        # depend on the .env key being valid; restore it afterwards.
+        original_fernet = profile_module._fernet
+        profile_module._fernet = Fernet(fresh_key.encode())
+        try:
+            _ciphertext = profile_module._encrypt_key(api_key)
+        finally:
+            profile_module._fernet = original_fernet
 
         # ── Code path 2: masking (from schemas) ───────────────────────────────
         _masked = _mask_api_key(api_key)
 
         # ── Code path 3: prompt construction (from AI_Tailor) ─────────────────
-        # Build an AITailor instance with a dummy key (not the one under test).
+        # Build an AITailor instance with a dummy key (not the key under test).
         with patch("backend.services.ai_tailor.settings") as mock_ai_settings:
             mock_ai_settings.LLM_PROVIDER = "openai"
             tailor = AITailor(llm_provider="openai", api_key="dummy-key-for-provider")
