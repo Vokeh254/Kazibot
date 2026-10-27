@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Auto-push on file edit",
+  "description": "After every file edit, stage and push changed files to GitHub with an auto-generated commit message.",
+  "version": "1",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": [
+      "write"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A file was just written or modified. Commit and push the changes to GitHub (https://github.com/Vokeh254/Kazibot.git) using git. Run: git add -A, then git commit with a concise message describing what changed, then git push. Use cwd /home/captain_kelvin/Desktop/KaziBot for all git commands. Skip the push if nothing changed (git status is clean)."
+  },
+  "workspaceFolderName": "KaziBot",
+  "shortName": "auto-push-on-file-edit"
+}
