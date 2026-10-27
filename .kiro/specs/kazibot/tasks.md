@@ -25,13 +25,13 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Initialise Alembic (`alembic init alembic`); configure `env.py` to target the async engine; generate and apply the initial migration
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [-] 2.2 Write property test for data persistence round-trip
+  - [x] 2.2 Write property test for data persistence round-trip
     - Use Hypothesis to generate arbitrary `JobListing`, `GeneratedEmail`, and `UserProfile` instances; write each to an in-memory SQLite DB and read back; assert all fields equal the original
     - `# Feature: kazibot, Property 11: Data persistence round-trip`
     - **Property 11: Data persistence round-trip**
     - **Validates: Requirements 7.1, 7.2, 7.3**
 
-  - [~] 2.3 Write integration tests for database constraints
+  - [-] 2.3 Write integration tests for database constraints
     - Test that inserting a duplicate `(title, company, board_source)` triple raises an integrity error
     - Test that a `GeneratedEmail` row cannot exist without a parent `JobListing`
     - _Requirements: 7.4_
