@@ -16,7 +16,7 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
   - Initialise `frontend/` with `npm create vite@latest -- --template react-ts`, install `tailwindcss`, `@tanstack/react-query`, `react-router-dom`, `react-hot-toast`
   - _Requirements: 8.5_
 
-- [ ] 2. Database layer — models, migrations, and session factory
+- [x] 2. Database layer — models, migrations, and session factory
   - [x] 2.1 Implement SQLAlchemy ORM models and async session factory
     - Create `backend/database.py`: async engine factory reading `DATABASE_URL`; export `get_async_session` dependency
     - Create `backend/models/job_listing.py`: `JobListing` ORM model with all columns and the `(title, company, board_source)` unique constraint; define `JobStatus` enum
@@ -31,13 +31,13 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - **Property 11: Data persistence round-trip**
     - **Validates: Requirements 7.1, 7.2, 7.3**
 
-  - [-] 2.3 Write integration tests for database constraints
+  - [x] 2.3 Write integration tests for database constraints
     - Test that inserting a duplicate `(title, company, board_source)` triple raises an integrity error
     - Test that a `GeneratedEmail` row cannot exist without a parent `JobListing`
     - _Requirements: 7.4_
 
 - [ ] 3. Pydantic schemas and profile API
-  - [~] 3.1 Implement Pydantic schemas
+  - [-] 3.1 Implement Pydantic schemas
     - Create `backend/schemas/job_listing.py`: `JobListingResponse`, `JobStatusUpdate`
     - Create `backend/schemas/generated_email.py`: `GeneratedEmailResponse`
     - Create `backend/schemas/user_profile.py`: `UserProfileRequest`, `UserProfileResponse` (masked API key field)
