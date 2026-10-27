@@ -47,18 +47,18 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Create `backend/services/token_store.py`: `save(token_dict)` encrypts with Fernet and writes to file; `load()` reads, decrypts, and returns dict; key read from `FERNET_KEY` env var
     - _Requirements: 8.1_
 
-  - [-] 3.3 Write property test for token store encrypt-decrypt round-trip
+  - [x] 3.3 Write property test for token store encrypt-decrypt round-trip
     - Use Hypothesis to generate arbitrary token dicts; call `save()` then `load()`; assert the result equals the original; assert file bytes are not valid UTF-8 JSON
     - `# Feature: kazibot, Property 12: Token store encrypt-decrypt round-trip`
     - **Property 12: Token store encrypt-decrypt round-trip**
     - **Validates: Requirements 8.1**
 
-  - [~] 3.4 Implement profile router
+  - [x] 3.4 Implement profile router
     - Create `backend/routers/profile.py`: `GET /api/profile` (returns masked key), `PUT /api/profile` (encrypts API key with Fernet before storing)
     - Wire router into `backend/main.py`
     - _Requirements: 5.1–5.7, 8.2, 8.3_
 
-  - [~] 3.5 Write property test for API key masking
+  - [-] 3.5 Write property test for API key masking
     - Use Hypothesis to generate key strings of length ≥ 4; assert masked form ends with same last 4 chars and all preceding chars are the mask character
     - `# Feature: kazibot, Property 10: API key masking preserves last 4 characters`
     - **Property 10: API key masking preserves last 4 characters**
