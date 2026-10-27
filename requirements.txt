@@ -1,0 +1,38 @@
+# KaziBot backend dependencies
+# Install with: pip install -r requirements.txt
+
+# Web framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+
+# Database — ORM, async drivers, and migrations
+sqlalchemy[asyncio]==2.0.36
+aiosqlite==0.20.0
+asyncpg==0.30.0
+alembic==1.14.0
+
+# Configuration
+pydantic-settings==2.6.1
+
+# Encryption / security
+cryptography==43.0.3
+
+# Browser automation (scraper)
+playwright==1.49.0
+
+# Google / Gmail integration
+google-auth==2.36.0
+google-auth-oauthlib==1.2.1
+google-api-python-client==2.154.0
+
+# LLM providers
+openai==1.57.2
+anthropic==0.40.0
+
+# HTTP client (used in tests and service layer)
+httpx==0.28.0
+
+# Testing
+hypothesis==6.122.3
+pytest==8.3.4
+pytest-asyncio==0.24.0

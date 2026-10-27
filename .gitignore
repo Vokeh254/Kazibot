@@ -1,0 +1,61 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.env
+*.pth
+
+# ── SQLite database ────────────────────────────────────────────────────────────
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# ── Alembic ───────────────────────────────────────────────────────────────────
+# Keep versions tracked; ignore pycache
+alembic/__pycache__/
+alembic/versions/__pycache__/
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# ── Vite / Build output ───────────────────────────────────────────────────────
+dist/
+.vite/
+
+# ── Test / coverage ───────────────────────────────────────────────────────────
+.pytest_cache/
+.hypothesis/
+htmlcov/
+.coverage
+coverage.xml
+*.lcov
+
+# ── Secrets / tokens ──────────────────────────────────────────────────────────
+*.token
+*.pem
+*.key
+token_store.enc
+google_token.enc
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Kiro spec outputs ─────────────────────────────────────────────────────────
+# Keep .kiro/specs tracked — they are the source of truth for the project
