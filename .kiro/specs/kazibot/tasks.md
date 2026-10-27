@@ -36,7 +36,7 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Test that a `GeneratedEmail` row cannot exist without a parent `JobListing`
     - _Requirements: 7.4_
 
-- [ ] 3. Pydantic schemas and profile API
+- [x] 3. Pydantic schemas and profile API
   - [x] 3.1 Implement Pydantic schemas
     - Create `backend/schemas/job_listing.py`: `JobListingResponse`, `JobStatusUpdate`
     - Create `backend/schemas/generated_email.py`: `GeneratedEmailResponse`
@@ -64,58 +64,58 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - **Property 10: API key masking preserves last 4 characters**
     - **Validates: Requirements 5.7**
 
-  - [-] 3.6 Write property test for API key not appearing in logs
+  - [x] 3.6 Write property test for API key not appearing in logs
     - Use Hypothesis to generate API key strings; run profile-save and prompt-construction code paths with a captured log handler; assert no log record contains the key value
     - `# Feature: kazibot, Property 13: API key never appears in log output`
     - **Property 13: API key never appears in log output**
     - **Validates: Requirements 8.3**
 
-- [ ] 4. Checkpoint — database and profile layer
+- [x] 4. Checkpoint — database and profile layer
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 5. Scraper framework and board plugins
-  - [ ] 5.1 Implement `BaseScraper` ABC and `ScraperOrchestrator`
+  - [x] 5.1 Implement `BaseScraper` ABC and `ScraperOrchestrator`
     - Create `backend/services/scraper/base.py`: `BaseScraper` ABC with abstract `scrape()` returning `list[JobListingCreate]`; include configurable User-Agent and randomised 3–7 s delay between requests; headless/headful toggle from config
     - Create `backend/services/scraper/__init__.py`: `ScraperOrchestrator` that iterates registered board plugins, calls `scrape()` on each, deduplicates against the DB, and persists new listings; wraps each board in a retry loop (max 3 attempts) with logging on failure
     - Shared Playwright browser context launched once per session, torn down in `async with`
     - _Requirements: 1.2, 1.3, 1.4, 1.5, 1.7, 1.8, 1.9_
 
-  - [ ] 5.2 Write property test for scraper deduplication
+  - [-] 5.2 Write property test for scraper deduplication
     - Use Hypothesis to generate arbitrary sets of `JobListingCreate` objects (including duplicates); run `ScraperOrchestrator` persist logic; assert no two rows share the same `(title, company, board_source)` triple
     - `# Feature: kazibot, Property 1: Scraper deduplication preserves uniqueness`
     - **Property 1: Scraper deduplication preserves uniqueness**
     - **Validates: Requirements 1.7, 7.4**
 
-  - [ ] 5.3 Write property test for scraper delay invariant
+  - [~] 5.3 Write property test for scraper delay invariant
     - Use Hypothesis with `@settings(max_examples=100)`; mock `asyncio.sleep`; for any N ≥ 2 requests assert each recorded sleep value is in [3, 7]
     - `# Feature: kazibot, Property 3: Scraper delay invariant`
     - **Property 3: Scraper delay invariant**
     - **Validates: Requirements 1.3**
 
-  - [ ] 5.4 Implement Fuzu board scraper
+  - [~] 5.4 Implement Fuzu board scraper
     - Create `backend/services/scraper/fuzu.py`: `FuzuScraper(BaseScraper)` — implement `scrape()` using Playwright to load listings and parse all required fields
     - _Requirements: 1.1, 1.6_
 
-  - [ ] 5.5 Write property test for scraper field completeness (Fuzu)
+  - [~] 5.5 Write property test for scraper field completeness (Fuzu)
     - Use Hypothesis to generate fixture HTML variants; assert parsed output always contains non-null `title`, `company`, `description`; assert optional fields are extracted when present
     - `# Feature: kazibot, Property 2: Scraper field completeness`
     - **Property 2: Scraper field completeness**
     - **Validates: Requirements 1.1**
 
-  - [ ] 5.6 Implement BrighterMonday board scraper
+  - [~] 5.6 Implement BrighterMonday board scraper
     - Create `backend/services/scraper/brighter_monday.py`: `BrighterMondayScraper(BaseScraper)` — implement `scrape()` using Playwright
     - _Requirements: 1.1, 1.6_
 
-  - [ ] 5.7 Implement MyJobMag board scraper
+  - [~] 5.7 Implement MyJobMag board scraper
     - Create `backend/services/scraper/my_job_mag.py`: `MyJobMagScraper(BaseScraper)` — implement `scrape()` using Playwright
     - _Requirements: 1.1, 1.6_
 
-  - [ ] 5.8 Implement scrape router
+  - [~] 5.8 Implement scrape router
     - Create `backend/routers/scrape.py`: `POST /api/scrape` endpoint that triggers `ScraperOrchestrator` and returns a count of newly persisted listings
     - Wire router into `backend/main.py`
     - _Requirements: 1.7, 1.8_
 
-  - [ ] 5.9 Write unit tests for scraper (mock Playwright)
+  - [~] 5.9 Write unit tests for scraper (mock Playwright)
     - Mock Playwright page objects using fixture HTML; assert all three board parsers return correctly structured `JobListingCreate` objects
     - _Requirements: 1.1_
 
