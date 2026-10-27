@@ -19,7 +19,7 @@ def _mask_api_key(key: str) -> str:
     (no masking applied — there is nothing meaningful to hide).
 
     >>> _mask_api_key("sk-abcdefgh")
-    '******efgh'
+    '*******efgh'
     >>> _mask_api_key("abcd")
     'abcd'
     """
