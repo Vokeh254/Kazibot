@@ -58,13 +58,13 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Wire router into `backend/main.py`
     - _Requirements: 5.1–5.7, 8.2, 8.3_
 
-  - [-] 3.5 Write property test for API key masking
+  - [x] 3.5 Write property test for API key masking
     - Use Hypothesis to generate key strings of length ≥ 4; assert masked form ends with same last 4 chars and all preceding chars are the mask character
     - `# Feature: kazibot, Property 10: API key masking preserves last 4 characters`
     - **Property 10: API key masking preserves last 4 characters**
     - **Validates: Requirements 5.7**
 
-  - [~] 3.6 Write property test for API key not appearing in logs
+  - [-] 3.6 Write property test for API key not appearing in logs
     - Use Hypothesis to generate API key strings; run profile-save and prompt-construction code paths with a captured log handler; assert no log record contains the key value
     - `# Feature: kazibot, Property 13: API key never appears in log output`
     - **Property 13: API key never appears in log output**
