@@ -157,19 +157,26 @@ def test_generated_email_without_parent_raises_integrity_error():
     """Inserting a GeneratedEmail whose job_listing_id references a
     non-existent JobListing must raise an IntegrityError (Requirement 7.4).
     """
+    from sqlalchemy import event, text
+    from sqlalchemy.ext.asyncio import AsyncConnection
+
     engine = _make_engine()
+
+    # SQLite disables FK checks by default; enable them for every new
+    # connection so that our FK constraint is actually enforced.
+    @event.listens_for(engine.sync_engine, "connect")
+    def _set_fk_pragma(dbapi_conn, _record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
     factory = _make_factory(engine)
 
     async def _run():
-        # Enable FK enforcement for SQLite (off by default).
-        async with engine.connect() as conn:
-            await conn.exec_driver_sql("PRAGMA foreign_keys = ON")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         try:
             async with factory() as session:
-                # Bind FK enforcement to this connection too.
-                await session.exec_driver_sql("PRAGMA foreign_keys = ON")
                 orphan = GeneratedEmail(
                     job_listing_id=999_999,  # No such parent exists.
                     email_body="Hello!",
