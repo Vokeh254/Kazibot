@@ -86,17 +86,17 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - **Property 1: Scraper deduplication preserves uniqueness**
     - **Validates: Requirements 1.7, 7.4**
 
-  - [-] 5.3 Write property test for scraper delay invariant
+  - [x] 5.3 Write property test for scraper delay invariant
     - Use Hypothesis with `@settings(max_examples=100)`; mock `asyncio.sleep`; for any N ≥ 2 requests assert each recorded sleep value is in [3, 7]
     - `# Feature: kazibot, Property 3: Scraper delay invariant`
     - **Property 3: Scraper delay invariant**
     - **Validates: Requirements 1.3**
 
-  - [~] 5.4 Implement Fuzu board scraper
+  - [x] 5.4 Implement Fuzu board scraper
     - Create `backend/services/scraper/fuzu.py`: `FuzuScraper(BaseScraper)` — implement `scrape()` using Playwright to load listings and parse all required fields
     - _Requirements: 1.1, 1.6_
 
-  - [~] 5.5 Write property test for scraper field completeness (Fuzu)
+  - [-] 5.5 Write property test for scraper field completeness (Fuzu)
     - Use Hypothesis to generate fixture HTML variants; assert parsed output always contains non-null `title`, `company`, `description`; assert optional fields are extracted when present
     - `# Feature: kazibot, Property 2: Scraper field completeness`
     - **Property 2: Scraper field completeness**
