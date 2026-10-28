@@ -150,40 +150,40 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Mock the HTTP client for both OpenAI and Anthropic; assert prompt construction and response handling; assert error responses keep job in `pending_ai` status
     - _Requirements: 2.7_
 
-- [ ] 8. Checkpoint — AI service layer
+- [x] 8. Checkpoint — AI service layer
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. Gmail Draft service and OAuth2 flow
-  - [ ] 9.1 Implement `Draft_Service`
+  - [x] 9.1 Implement `Draft_Service`
     - Create `backend/services/draft_service.py`: `push_to_draft(job: JobListing, email_body: str)` — builds Gmail API `drafts.create` payload with `To` header set to `application_email` (when non-null); calls only `drafts.create`, never `messages.send`; on success updates job status to `draft_created`
     - Use `google-auth` + `google-api-python-client` with `gmail.compose` scope only
     - Handle automatic token refresh via stored refresh token; on refresh failure surface 401
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.7, 8.1, 8.4_
 
-  - [ ] 9.2 Write property test — Draft_Service never calls send endpoint
+  - [-] 9.2 Write property test — Draft_Service never calls send endpoint
     - Use Hypothesis to generate arbitrary job and email body inputs; mock the Gmail API client; assert zero calls to `messages.send` and exactly one call to `drafts.create`
     - `# Feature: kazibot, Property 5: Draft_Service never calls the Gmail send endpoint`
     - **Property 5: Draft_Service never calls the Gmail send endpoint**
     - **Validates: Requirements 3.3**
 
-  - [ ] 9.3 Write property test — draft creation updates job status
+  - [~] 9.3 Write property test — draft creation updates job status
     - Use Hypothesis to generate job listings in various non-final statuses; after `push_to_draft()` returns successfully, assert persisted status is exactly `draft_created`
     - `# Feature: kazibot, Property 6: Draft creation updates job status to Draft Created`
     - **Property 6: Draft creation updates job status to Draft Created**
     - **Validates: Requirements 3.4**
 
-  - [ ] 9.4 Write property test — draft To field matches application email
+  - [~] 9.4 Write property test — draft To field matches application email
     - Use Hypothesis to generate job listings with non-null `application_email`; capture the `drafts.create` payload; assert `To` header equals `application_email`
     - `# Feature: kazibot, Property 7: Draft "To" field matches application email`
     - **Property 7: Draft "To" field matches application email**
     - **Validates: Requirements 3.7**
 
-  - [ ] 9.5 Implement OAuth2 auth flow endpoints
+  - [~] 9.5 Implement OAuth2 auth flow endpoints
     - Create `backend/routers/drafts.py`: `GET /api/auth/gmail` (initiates OAuth2 redirect), `GET /api/auth/gmail/callback` (exchanges code for tokens, saves via `TokenStore`), `POST /api/drafts/{job_id}` (calls `Draft_Service.push_to_draft`)
     - Wire router into `backend/main.py`
     - _Requirements: 3.1, 3.5, 3.6, 8.1_
 
-  - [ ] 9.6 Write unit tests for Draft_Service (mock Gmail API client)
+  - [~] 9.6 Write unit tests for Draft_Service (mock Gmail API client)
     - Assert draft payload structure: correct headers, body, `To` field populated; assert error paths return correct HTTP status codes
     - _Requirements: 3.1, 3.6, 3.7_
 
