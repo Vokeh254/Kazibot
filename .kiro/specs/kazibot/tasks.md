@@ -183,28 +183,28 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Wire router into `backend/main.py`
     - _Requirements: 3.1, 3.5, 3.6, 8.1_
 
-  - [-] 9.6 Write unit tests for Draft_Service (mock Gmail API client)
+  - [x] 9.6 Write unit tests for Draft_Service (mock Gmail API client)
     - Assert draft payload structure: correct headers, body, `To` field populated; assert error paths return correct HTTP status codes
     - _Requirements: 3.1, 3.6, 3.7_
 
-- [ ] 10. Jobs router
+- [x] 10. Jobs router
   - Create `backend/routers/jobs.py`: `GET /api/jobs` (optional `?status=` filter), `GET /api/jobs/{id}` (includes `generated_email`), `PATCH /api/jobs/{id}/status`
   - Wire router into `backend/main.py`
   - _Requirements: 4.1, 4.5, 4.6_
 
-- [ ] 11. Checkpoint — all backend endpoints
+- [x] 11. Checkpoint — all backend endpoints
   - Ensure all tests pass and all 10 REST endpoints respond correctly, ask the user if questions arise.
 
 - [ ] 12. Frontend — shared types, API client, and base components
-  - [ ] 12.1 Define shared TypeScript types
+  - [~] 12.1 Define shared TypeScript types
     - Create `frontend/src/types/index.ts`: `JobListing`, `GeneratedEmail`, `UserProfile`, `JobStatus` enum mirroring backend schemas
     - _Requirements: 4.1–4.6, 5.1–5.7, 6.1–6.7_
 
-  - [ ] 12.2 Implement typed API client modules
+  - [~] 12.2 Implement typed API client modules
     - Create `frontend/src/api/jobs.ts`, `api/profile.ts`, `api/ai.ts`, `api/drafts.ts` — typed `fetch` wrappers for all backend endpoints
     - _Requirements: 4.1–4.6, 5.6, 6.3_
 
-  - [ ] 12.3 Implement shared UI components
+  - [~] 12.3 Implement shared UI components
     - Create `frontend/src/components/JobCard.tsx`: renders `title`, `company`, `deadline`, and `<StatusBadge status={…} />`
     - Create `frontend/src/components/StatusBadge.tsx`: distinct Tailwind CSS classes for each of the four `JobStatus` values
     - Create `frontend/src/components/LoadingSpinner.tsx`
