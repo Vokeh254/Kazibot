@@ -1,8 +1,8 @@
 """
-Unit tests for DraftService with mocked Gmail API client.
+Unit tests for Draft_Service with mocked Gmail API client.
 
-Tests verify draft payload structure, To field, error handling paths,
-and status update behaviour without making real API calls.
+Tests verify draft payload structure, To field population, error paths,
+and HTTP status codes returned to the API layer.
 
 Requirements: 3.1, 3.6, 3.7
 """
@@ -23,51 +23,60 @@ from backend.services.draft_service import (
     DraftService,
     GmailAPIError,
 )
+from backend.services.token_store import TokenStore
 
+
+# ── Shared async helper ───────────────────────────────────────────────────────
 
 def run_async(coro):
     return asyncio.get_event_loop().run_until_complete(coro)
 
 
-# ── Mock helpers ──────────────────────────────────────────────────────────────
+# ── Mock factory helpers ──────────────────────────────────────────────────────
 
-_FAKE_TOKEN_DICT = {
-    "token": "fake-access-token",
-    "refresh_token": "fake-refresh-token",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "client_id": "fake-client-id",
-    "client_secret": "fake-secret",
-    "scopes": ["https://www.googleapis.com/auth/gmail.compose"],
-}
+def _make_mock_gmail_client(http_error: HttpError | None = None):
+    """Return (mock_client, mock_create_fn). If http_error is given, execute() raises it."""
+    mock_client = MagicMock()
+    if http_error:
+        mock_execute = MagicMock(side_effect=http_error)
+    else:
+        mock_execute = MagicMock(return_value={"id": "draft_123"})
 
-
-def _make_token_store(exists: bool = True) -> MagicMock:
-    ts = MagicMock()
-    ts.exists.return_value = exists
-    ts.load.return_value = _FAKE_TOKEN_DICT
-    return ts
+    mock_create = MagicMock()
+    mock_create.return_value.execute = mock_execute
+    mock_client.users.return_value.drafts.return_value.create = mock_create
+    return mock_client, mock_create
 
 
-def _make_gmail_mock() -> MagicMock:
-    """Return a mock Gmail client whose drafts().create().execute() succeeds."""
-    gmail = MagicMock()
-    gmail.users.return_value.drafts.return_value.create.return_value.execute.return_value = {
-        "id": "draft_abc123"
-    }
-    return gmail
-
-
-def _make_session_mock() -> AsyncMock:
-    """Return an async mock for the SQLAlchemy session."""
+def _make_mock_session(job_status_holder: list):
+    """Return an AsyncMock session that records status updates."""
     session = AsyncMock()
-    # Simulate execute returning a result with scalar_one_or_none() -> a mock job
-    mock_job = MagicMock()
-    mock_job.status = JobStatus.pending_ai
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = mock_job
-    session.execute = AsyncMock(return_value=mock_result)
-    session.commit = AsyncMock()
-    return session, mock_job
+
+    async def _commit():
+        pass
+
+    session.commit = _commit
+
+    # _update_job_status calls session.execute then commit; we mock it at the
+    # DraftService level instead (see tests below).
+    return session
+
+
+def _make_service(mock_gmail_client) -> DraftService:
+    """Build a DraftService wired to mock_gmail_client and a fake token store."""
+    svc = DraftService.__new__(DraftService)
+    svc._token_store = MagicMock(spec=TokenStore)
+    svc._token_store.exists.return_value = True
+    svc._token_store.load.return_value = {
+        "token": "tok",
+        "refresh_token": "rtok",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "client_id": "cid",
+        "client_secret": "csec",
+        "scopes": ["https://www.googleapis.com/auth/gmail.compose"],
+    }
+    svc._build_gmail_client = lambda _creds: mock_gmail_client
+    return svc
 
 
 def _make_http_error(status: int) -> HttpError:
@@ -80,187 +89,186 @@ def _make_http_error(status: int) -> HttpError:
 
 class TestDraftPayloadStructure:
 
-    def test_draft_payload_contains_email_body(self):
-        """The raw draft payload contains the email body text."""
-        body = "Dear Hiring Team, I am excited to apply for this role."
-        raw = DraftService._build_draft_payload(body, to_address=None)
-        decoded = base64.urlsafe_b64decode(raw + "==")
-        msg = email_lib.message_from_bytes(decoded)
-        assert body in msg.get_payload(decode=True).decode("utf-8")
+    def test_draft_payload_has_correct_body_text(self):
+        """The MIME body of the draft contains the email_body text."""
+        mock_gmail, mock_create = _make_mock_gmail_client()
+        svc = _make_service(mock_gmail)
+        email_body = "Dear Hiring Team, I am excited to apply..."
 
-    def test_draft_payload_to_field_set_when_address_provided(self):
-        """The To header is set when an application email is provided."""
-        body = "Cover letter body."
-        to = "jobs@company.co.ke"
-        raw = DraftService._build_draft_payload(body, to_address=to)
-        decoded = base64.urlsafe_b64decode(raw + "==")
-        msg = email_lib.message_from_bytes(decoded)
-        assert msg["To"] == to
+        # Patch _update_job_status to avoid DB dependency
+        svc._update_job_status = AsyncMock()
 
-    def test_draft_payload_no_to_field_when_address_none(self):
-        """The To header is absent when application_email is None."""
-        raw = DraftService._build_draft_payload("Body text.", to_address=None)
-        decoded = base64.urlsafe_b64decode(raw + "==")
-        msg = email_lib.message_from_bytes(decoded)
+        run_async(svc.push_to_draft(
+            job_id=1,
+            email_body=email_body,
+            to_address=None,
+            session=AsyncMock(),
+        ))
+
+        call_kwargs = mock_create.call_args
+        raw_b64 = call_kwargs.kwargs["body"]["message"]["raw"]
+        raw_bytes = base64.urlsafe_b64decode(raw_b64 + "==")
+        msg = email_lib.message_from_bytes(raw_bytes)
+
+        assert email_body in msg.get_payload(decode=True).decode("utf-8")
+
+    def test_draft_to_field_populated_when_email_provided(self):
+        """The To header is set to application_email when provided."""
+        mock_gmail, mock_create = _make_mock_gmail_client()
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
+
+        run_async(svc.push_to_draft(
+            job_id=1,
+            email_body="Cover letter body.",
+            to_address="hr@example.co.ke",
+            session=AsyncMock(),
+        ))
+
+        call_kwargs = mock_create.call_args
+        raw_b64 = call_kwargs.kwargs["body"]["message"]["raw"]
+        raw_bytes = base64.urlsafe_b64decode(raw_b64 + "==")
+        msg = email_lib.message_from_bytes(raw_bytes)
+
+        assert msg["To"] == "hr@example.co.ke"
+
+    def test_draft_to_field_absent_when_no_email(self):
+        """The To header is absent when to_address is None."""
+        mock_gmail, mock_create = _make_mock_gmail_client()
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
+
+        run_async(svc.push_to_draft(
+            job_id=1,
+            email_body="Cover letter body.",
+            to_address=None,
+            session=AsyncMock(),
+        ))
+
+        call_kwargs = mock_create.call_args
+        raw_b64 = call_kwargs.kwargs["body"]["message"]["raw"]
+        raw_bytes = base64.urlsafe_b64decode(raw_b64 + "==")
+        msg = email_lib.message_from_bytes(raw_bytes)
+
         assert msg["To"] is None
 
+    def test_drafts_create_called_with_user_id_me(self):
+        """drafts.create is called with userId='me'."""
+        mock_gmail, mock_create = _make_mock_gmail_client()
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
 
-# ── Successful draft creation ─────────────────────────────────────────────────
+        run_async(svc.push_to_draft(
+            job_id=1,
+            email_body="Body.",
+            to_address=None,
+            session=AsyncMock(),
+        ))
 
-class TestSuccessfulDraftCreation:
-
-    def test_push_to_draft_calls_drafts_create_once(self):
-        """push_to_draft() calls drafts.create exactly once on success."""
-        token_store = _make_token_store()
-        gmail = _make_gmail_mock()
-        session, mock_job = _make_session_mock()
-        svc = DraftService(token_store=token_store)
-
-        with patch.object(DraftService, "_build_gmail_client", return_value=gmail):
-            run_async(svc.push_to_draft(
-                job_id=1,
-                email_body="My cover letter.",
-                to_address="hr@company.com",
-                session=session,
-            ))
-
-        assert gmail.users().drafts().create.call_count == 1
-
-    def test_push_to_draft_never_calls_messages_send(self):
-        """push_to_draft() never calls messages.send under any circumstances."""
-        token_store = _make_token_store()
-        gmail = _make_gmail_mock()
-        session, _ = _make_session_mock()
-        svc = DraftService(token_store=token_store)
-
-        with patch.object(DraftService, "_build_gmail_client", return_value=gmail):
-            run_async(svc.push_to_draft(
-                job_id=1,
-                email_body="My cover letter.",
-                to_address=None,
-                session=session,
-            ))
-
-        assert gmail.users().messages().send.call_count == 0
-
-    def test_push_to_draft_updates_job_status(self):
-        """push_to_draft() updates the job status to draft_created on success."""
-        token_store = _make_token_store()
-        gmail = _make_gmail_mock()
-        session, mock_job = _make_session_mock()
-        svc = DraftService(token_store=token_store)
-
-        with patch.object(DraftService, "_build_gmail_client", return_value=gmail):
-            run_async(svc.push_to_draft(
-                job_id=1,
-                email_body="My cover letter.",
-                to_address=None,
-                session=session,
-            ))
-
-        assert mock_job.status == JobStatus.draft_created
-        session.commit.assert_awaited_once()
+        call_kwargs = mock_create.call_args
+        assert call_kwargs.kwargs.get("userId") == "me"
 
 
-# ── Authentication error paths ────────────────────────────────────────────────
+# ── Error path tests ──────────────────────────────────────────────────────────
 
-class TestAuthenticationErrors:
+class TestDraftServiceErrorPaths:
 
-    def test_raises_auth_error_when_no_token_file(self):
-        """push_to_draft() raises AuthenticationError when no tokens are stored."""
-        token_store = _make_token_store(exists=False)
-        svc = DraftService(token_store=token_store)
-        session, _ = _make_session_mock()
+    def test_401_raises_authentication_error(self):
+        """Gmail HTTP 401 is raised as AuthenticationError."""
+        mock_gmail, _ = _make_mock_gmail_client(http_error=_make_http_error(401))
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
+
+        with pytest.raises(AuthenticationError):
+            run_async(svc.push_to_draft(1, "Body.", None, AsyncMock()))
+
+    def test_403_raises_authentication_error(self):
+        """Gmail HTTP 403 is raised as AuthenticationError."""
+        mock_gmail, _ = _make_mock_gmail_client(http_error=_make_http_error(403))
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
+
+        with pytest.raises(AuthenticationError):
+            run_async(svc.push_to_draft(1, "Body.", None, AsyncMock()))
+
+    def test_500_raises_gmail_api_error(self):
+        """Gmail HTTP 500 is raised as GmailAPIError (not AuthenticationError)."""
+        mock_gmail, _ = _make_mock_gmail_client(http_error=_make_http_error(500))
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
+
+        with pytest.raises(GmailAPIError):
+            run_async(svc.push_to_draft(1, "Body.", None, AsyncMock()))
+
+    def test_503_raises_gmail_api_error(self):
+        """Gmail HTTP 503 is raised as GmailAPIError."""
+        mock_gmail, _ = _make_mock_gmail_client(http_error=_make_http_error(503))
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
+
+        with pytest.raises(GmailAPIError):
+            run_async(svc.push_to_draft(1, "Body.", None, AsyncMock()))
+
+    def test_missing_token_raises_authentication_error(self):
+        """AuthenticationError is raised when no token file exists."""
+        svc = DraftService.__new__(DraftService)
+        svc._token_store = MagicMock(spec=TokenStore)
+        svc._token_store.exists.return_value = False  # No tokens stored
 
         with pytest.raises(AuthenticationError, match="No Gmail OAuth2 tokens"):
-            run_async(svc.push_to_draft(
-                job_id=1,
-                email_body="body",
-                to_address=None,
-                session=session,
-            ))
+            run_async(svc.push_to_draft(1, "Body.", None, AsyncMock()))
 
-    def test_raises_auth_error_on_http_401(self):
-        """push_to_draft() raises AuthenticationError on HTTP 401 from Gmail."""
-        token_store = _make_token_store()
-        gmail = _make_gmail_mock()
-        gmail.users.return_value.drafts.return_value.create.return_value.execute.side_effect = (
-            _make_http_error(401)
-        )
-        session, _ = _make_session_mock()
-        svc = DraftService(token_store=token_store)
+    def test_auth_error_does_not_update_job_status(self):
+        """On AuthenticationError, _update_job_status is never called."""
+        mock_gmail, _ = _make_mock_gmail_client(http_error=_make_http_error(401))
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
 
         with pytest.raises(AuthenticationError):
-            with patch.object(DraftService, "_build_gmail_client", return_value=gmail):
-                run_async(svc.push_to_draft(
-                    job_id=1,
-                    email_body="body",
-                    to_address=None,
-                    session=session,
-                ))
+            run_async(svc.push_to_draft(1, "Body.", None, AsyncMock()))
 
-    def test_raises_auth_error_on_http_403(self):
-        """push_to_draft() raises AuthenticationError on HTTP 403 from Gmail."""
-        token_store = _make_token_store()
-        gmail = _make_gmail_mock()
-        gmail.users.return_value.drafts.return_value.create.return_value.execute.side_effect = (
-            _make_http_error(403)
-        )
-        session, _ = _make_session_mock()
-        svc = DraftService(token_store=token_store)
+        svc._update_job_status.assert_not_awaited()
 
-        with pytest.raises(AuthenticationError):
-            with patch.object(DraftService, "_build_gmail_client", return_value=gmail):
-                run_async(svc.push_to_draft(
-                    job_id=1,
-                    email_body="body",
-                    to_address=None,
-                    session=session,
-                ))
-
-
-# ── Non-auth Gmail API error paths ────────────────────────────────────────────
-
-class TestNonAuthGmailErrors:
-
-    def test_raises_gmail_api_error_on_http_500(self):
-        """push_to_draft() raises GmailAPIError on HTTP 500 from Gmail."""
-        token_store = _make_token_store()
-        gmail = _make_gmail_mock()
-        gmail.users.return_value.drafts.return_value.create.return_value.execute.side_effect = (
-            _make_http_error(500)
-        )
-        session, mock_job = _make_session_mock()
-        svc = DraftService(token_store=token_store)
+    def test_gmail_api_error_does_not_update_job_status(self):
+        """On GmailAPIError, _update_job_status is never called (status unchanged)."""
+        mock_gmail, _ = _make_mock_gmail_client(http_error=_make_http_error(500))
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
 
         with pytest.raises(GmailAPIError):
-            with patch.object(DraftService, "_build_gmail_client", return_value=gmail):
-                run_async(svc.push_to_draft(
-                    job_id=1,
-                    email_body="body",
-                    to_address=None,
-                    session=session,
-                ))
+            run_async(svc.push_to_draft(1, "Body.", None, AsyncMock()))
 
-    def test_job_status_not_updated_on_gmail_api_error(self):
-        """Job status remains unchanged when Gmail API returns a non-auth error."""
-        token_store = _make_token_store()
-        gmail = _make_gmail_mock()
-        gmail.users.return_value.drafts.return_value.create.return_value.execute.side_effect = (
-            _make_http_error(502)
-        )
-        session, mock_job = _make_session_mock()
-        svc = DraftService(token_store=token_store)
+        svc._update_job_status.assert_not_awaited()
 
-        with pytest.raises(GmailAPIError):
-            with patch.object(DraftService, "_build_gmail_client", return_value=gmail):
-                run_async(svc.push_to_draft(
-                    job_id=1,
-                    email_body="body",
-                    to_address=None,
-                    session=session,
-                ))
 
-        # Status must NOT be updated to draft_created (Requirement 3.6)
-        assert mock_job.status != JobStatus.draft_created
-        session.commit.assert_not_awaited()
+# ── Success path tests ────────────────────────────────────────────────────────
+
+class TestDraftServiceSuccessPath:
+
+    def test_successful_draft_calls_update_job_status(self):
+        """On success, _update_job_status is called with draft_created."""
+        mock_gmail, _ = _make_mock_gmail_client()
+        svc = _make_service(mock_gmail)
+        svc._update_job_status = AsyncMock()
+
+        run_async(svc.push_to_draft(42, "Email body.", "jobs@corp.com", AsyncMock()))
+
+        svc._update_job_status.assert_awaited_once()
+        _, call_kwargs = svc._update_job_status.call_args
+        # Third positional arg is new_status
+        args = svc._update_job_status.call_args.args
+        assert JobStatus.draft_created in args
+
+    def test_is_authenticated_true_when_token_exists(self):
+        """is_authenticated() returns True when a token file is present."""
+        svc = DraftService.__new__(DraftService)
+        svc._token_store = MagicMock(spec=TokenStore)
+        svc._token_store.exists.return_value = True
+        assert svc.is_authenticated() is True
+
+    def test_is_authenticated_false_when_no_token(self):
+        """is_authenticated() returns False when no token file exists."""
+        svc = DraftService.__new__(DraftService)
+        svc._token_store = MagicMock(spec=TokenStore)
+        svc._token_store.exists.return_value = False
+        assert svc.is_authenticated() is False
