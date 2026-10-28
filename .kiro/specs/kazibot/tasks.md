@@ -242,19 +242,19 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
   - Ensure all Vitest tests pass, ask the user if questions arise.
 
 - [ ] 18. Integration tests — end-to-end backend flows
-  - [ ] 18.1 Scraper → Database integration test
+  - [x] 18.1 Scraper → Database integration test
     - Serve fixture HTML via an embedded HTTP server; run `ScraperOrchestrator` against it; verify listings are persisted and a second run produces no duplicates
     - _Requirements: 1.1, 1.7, 7.4_
 
-  - [~] 18.2 AI → Database integration test
+  - [x] 18.2 AI → Database integration test
     - Mock the LLM HTTP client; call `POST /api/ai/generate/{job_id}` via `httpx.AsyncClient`; assert `GeneratedEmail` row created and job status unchanged from `pending_ai`
     - _Requirements: 2.1, 7.2_
 
-  - [~] 18.3 Draft_Service → Gmail API integration test
+  - [x] 18.3 Draft_Service → Gmail API integration test
     - Mock the Gmail HTTP endpoint; call `POST /api/drafts/{job_id}`; assert exactly one `drafts.create` call and status updated to `draft_created`
     - _Requirements: 3.1, 3.3, 3.4_
 
-- [~] 19. Final checkpoint — all tests pass
+- [-] 19. Final checkpoint — all tests pass
   - Ensure all backend (pytest) and frontend (vitest) tests pass, ask the user if questions arise.
 
 ---

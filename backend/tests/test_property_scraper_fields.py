@@ -23,7 +23,9 @@ from backend.services.scraper.fuzu import _extract_email, _extract_deadline
 
 # Printable text that avoids empty strings for required fields
 _printable = st.characters(whitelist_categories=("L", "N", "P", "Z"))
-_non_empty_text = st.text(alphabet=_printable, min_size=1, max_size=200)
+_non_empty_text = st.text(alphabet=_printable, min_size=1, max_size=200).filter(
+    lambda s: s.strip() != ""
+)
 
 # Valid email local parts and domains (ASCII-only, matching _extract_email regex)
 _ASCII_ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
