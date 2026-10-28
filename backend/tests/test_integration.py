@@ -178,10 +178,10 @@ class TestAIDatabaseIntegration:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
             try:
-                # Seed job listing and user profile
                 from backend.models.user_profile import UserProfile
                 from cryptography.fernet import Fernet
 
+                # Use a known key so we can encrypt and the router can decrypt
                 test_key = Fernet.generate_key()
                 fernet = Fernet(test_key)
                 encrypted_key = fernet.encrypt(b"sk-test-key").decode()
@@ -207,40 +207,39 @@ class TestAIDatabaseIntegration:
                     await session.refresh(job)
                     job_id = job.id
 
-                # Patch settings and LLM to avoid real API calls
                 generated_text = "Dear Acme Team, I am excited to apply..."
 
-                with (
-                    patch("backend.services.ai_tailor.settings") as mock_ai_settings,
-                    patch("backend.services.ai_tailor.OpenAIProvider") as MockOpenAI,
-                    patch("backend.routers.ai.settings") as mock_router_settings,
-                ):
-                    mock_router_settings.FERNET_KEY = test_key.decode()
-                    mock_router_settings.LLM_PROVIDER = "openai"
-                    mock_ai_settings.LLM_PROVIDER = "openai"
+                # Patch backend.config.settings so the locally-imported settings
+                # in the router picks up the test Fernet key
+                from backend import config as config_module
+                original_key = config_module.settings.FERNET_KEY
 
-                    mock_provider = MagicMock()
-                    mock_provider.complete = AsyncMock(return_value=generated_text)
-                    MockOpenAI.return_value = mock_provider
+                config_module.settings.FERNET_KEY = test_key.decode()
+                try:
+                    with patch("backend.services.ai_tailor.OpenAIProvider") as MockOpenAI:
+                        mock_provider = MagicMock()
+                        mock_provider.complete = AsyncMock(return_value=generated_text)
+                        MockOpenAI.return_value = mock_provider
 
-                    from backend.main import create_app
-                    app = create_app()
+                        from backend.main import create_app
+                        app = create_app()
 
-                    # Override DB dependency to use test engine
-                    from backend.database import get_async_session
+                        from backend.database import get_async_session
 
-                    async def override_session():
-                        async with factory() as s:
-                            yield s
+                        async def override_session():
+                            async with factory() as s:
+                                yield s
 
-                    app.dependency_overrides[get_async_session] = override_session
+                        app.dependency_overrides[get_async_session] = override_session
 
-                    async with AsyncClient(
-                        transport=ASGITransport(app=app), base_url="http://test"
-                    ) as client:
-                        response = await client.post(f"/api/ai/generate/{job_id}")
+                        async with AsyncClient(
+                            transport=ASGITransport(app=app), base_url="http://test"
+                        ) as client:
+                            response = await client.post(f"/api/ai/generate/{job_id}")
 
-                    return response.status_code, job_id
+                        return response.status_code, job_id
+                finally:
+                    config_module.settings.FERNET_KEY = original_key
 
             finally:
                 async with engine.begin() as conn:
