@@ -96,26 +96,26 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Create `backend/services/scraper/fuzu.py`: `FuzuScraper(BaseScraper)` — implement `scrape()` using Playwright to load listings and parse all required fields
     - _Requirements: 1.1, 1.6_
 
-  - [-] 5.5 Write property test for scraper field completeness (Fuzu)
+  - [x] 5.5 Write property test for scraper field completeness (Fuzu)
     - Use Hypothesis to generate fixture HTML variants; assert parsed output always contains non-null `title`, `company`, `description`; assert optional fields are extracted when present
     - `# Feature: kazibot, Property 2: Scraper field completeness`
     - **Property 2: Scraper field completeness**
     - **Validates: Requirements 1.1**
 
-  - [~] 5.6 Implement BrighterMonday board scraper
+  - [x] 5.6 Implement BrighterMonday board scraper
     - Create `backend/services/scraper/brighter_monday.py`: `BrighterMondayScraper(BaseScraper)` — implement `scrape()` using Playwright
     - _Requirements: 1.1, 1.6_
 
-  - [~] 5.7 Implement MyJobMag board scraper
+  - [x] 5.7 Implement MyJobMag board scraper
     - Create `backend/services/scraper/my_job_mag.py`: `MyJobMagScraper(BaseScraper)` — implement `scrape()` using Playwright
     - _Requirements: 1.1, 1.6_
 
-  - [~] 5.8 Implement scrape router
+  - [x] 5.8 Implement scrape router
     - Create `backend/routers/scrape.py`: `POST /api/scrape` endpoint that triggers `ScraperOrchestrator` and returns a count of newly persisted listings
     - Wire router into `backend/main.py`
     - _Requirements: 1.7, 1.8_
 
-  - [~] 5.9 Write unit tests for scraper (mock Playwright)
+  - [ ] 5.9 Write unit tests for scraper (mock Playwright)
     - Mock Playwright page objects using fixture HTML; assert all three board parsers return correctly structured `JobListingCreate` objects
     - _Requirements: 1.1_
 
