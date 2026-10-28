@@ -135,18 +135,18 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Include GitHub URL and portfolio URL in prompt when non-null
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.8_
 
-  - [-] 7.3 Write property test for AI prompt completeness
+  - [x] 7.3 Write property test for AI prompt completeness
     - Use Hypothesis to generate arbitrary `UserProfile` (non-empty resume, non-empty tech stack) and `JobListing` objects; assert the constructed prompt string contains the job description, resume text, tech stack, and both URLs when non-null
     - `# Feature: kazibot, Property 4: AI prompt completeness`
     - **Property 4: AI prompt completeness**
     - **Validates: Requirements 2.1, 2.2, 2.4, 2.5**
 
-  - [~] 7.4 Implement AI router
+  - [x] 7.4 Implement AI router
     - Create `backend/routers/ai.py`: `POST /api/ai/generate/{job_id}` — fetch job + profile, call `AI_Tailor.generate()`, persist result to `GeneratedEmail`, update `Job_Status` if needed; on LLM error log (without key) and return structured error payload
     - Wire router into `backend/main.py`
     - _Requirements: 2.1, 2.7_
 
-  - [~] 7.5 Write unit tests for AI_Tailor (mock LLM client)
+  - [-] 7.5 Write unit tests for AI_Tailor (mock LLM client)
     - Mock the HTTP client for both OpenAI and Anthropic; assert prompt construction and response handling; assert error responses keep job in `pending_ai` status
     - _Requirements: 2.7_
 
