@@ -73,7 +73,7 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
 - [x] 4. Checkpoint — database and profile layer
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Scraper framework and board plugins
+- [x] 5. Scraper framework and board plugins
   - [x] 5.1 Implement `BaseScraper` ABC and `ScraperOrchestrator`
     - Create `backend/services/scraper/base.py`: `BaseScraper` ABC with abstract `scrape()` returning `list[JobListingCreate]`; include configurable User-Agent and randomised 3–7 s delay between requests; headless/headful toggle from config
     - Create `backend/services/scraper/__init__.py`: `ScraperOrchestrator` that iterates registered board plugins, calls `scrape()` on each, deduplicates against the DB, and persists new listings; wraps each board in a retry loop (max 3 attempts) with logging on failure
@@ -115,38 +115,38 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Wire router into `backend/main.py`
     - _Requirements: 1.7, 1.8_
 
-  - [ ] 5.9 Write unit tests for scraper (mock Playwright)
+  - [x] 5.9 Write unit tests for scraper (mock Playwright)
     - Mock Playwright page objects using fixture HTML; assert all three board parsers return correctly structured `JobListingCreate` objects
     - _Requirements: 1.1_
 
-- [ ] 6. Checkpoint — scraper layer
+- [x] 6. Checkpoint — scraper layer
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 7. AI cover letter generation service
-  - [ ] 7.1 Implement `LLMProvider` protocol and concrete providers
+  - [x] 7.1 Implement `LLMProvider` protocol and concrete providers
     - Create `backend/services/ai_tailor.py`: define `LLMProvider` protocol with `async complete(prompt: str) -> str`
     - Implement `OpenAIProvider` and `AnthropicProvider`; select active provider at startup from `LLM_PROVIDER` env var
     - Apply exponential backoff with jitter for HTTP 429 responses
     - _Requirements: 2.6_
 
-  - [ ] 7.2 Implement prompt template and `AI_Tailor` service
+  - [x] 7.2 Implement prompt template and `AI_Tailor` service
     - Create `backend/prompts/cover_letter.txt`: prompt template with placeholders for all `UserProfile` fields and the job description
     - Implement `AI_Tailor.generate(job: JobListing, profile: UserProfile) -> str`: reads template from file, interpolates all profile fields, calls `LLMProvider.complete()`
     - Include GitHub URL and portfolio URL in prompt when non-null
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.8_
 
-  - [ ] 7.3 Write property test for AI prompt completeness
+  - [-] 7.3 Write property test for AI prompt completeness
     - Use Hypothesis to generate arbitrary `UserProfile` (non-empty resume, non-empty tech stack) and `JobListing` objects; assert the constructed prompt string contains the job description, resume text, tech stack, and both URLs when non-null
     - `# Feature: kazibot, Property 4: AI prompt completeness`
     - **Property 4: AI prompt completeness**
     - **Validates: Requirements 2.1, 2.2, 2.4, 2.5**
 
-  - [ ] 7.4 Implement AI router
+  - [~] 7.4 Implement AI router
     - Create `backend/routers/ai.py`: `POST /api/ai/generate/{job_id}` — fetch job + profile, call `AI_Tailor.generate()`, persist result to `GeneratedEmail`, update `Job_Status` if needed; on LLM error log (without key) and return structured error payload
     - Wire router into `backend/main.py`
     - _Requirements: 2.1, 2.7_
 
-  - [ ] 7.5 Write unit tests for AI_Tailor (mock LLM client)
+  - [~] 7.5 Write unit tests for AI_Tailor (mock LLM client)
     - Mock the HTTP client for both OpenAI and Anthropic; assert prompt construction and response handling; assert error responses keep job in `pending_ai` status
     - _Requirements: 2.7_
 
