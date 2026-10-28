@@ -195,7 +195,7 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
 - [x] 11. Checkpoint — all backend endpoints
   - Ensure all tests pass and all 10 REST endpoints respond correctly, ask the user if questions arise.
 
-- [ ] 12. Frontend — shared types, API client, and base components
+- [x] 12. Frontend — shared types, API client, and base components
   - [x] 12.1 Define shared TypeScript types
     - Create `frontend/src/types/index.ts`: `JobListing`, `GeneratedEmail`, `UserProfile`, `JobStatus` enum mirroring backend schemas
     - _Requirements: 4.1–4.6, 5.1–5.7, 6.1–6.7_
@@ -210,39 +210,39 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Create `frontend/src/components/LoadingSpinner.tsx`
     - _Requirements: 4.2, 4.3_
 
-  - [-] 12.4 Write property test for JobCard rendering required fields
+  - [x] 12.4 Write property test for JobCard rendering required fields
     - Use Vitest + React Testing Library; use `@fast-check/vitest` to generate arbitrary `JobListing` objects; assert rendered output contains title, company, deadline, and status badge
     - `# Feature: kazibot, Property 8: JobCard renders all required fields`
     - **Property 8: JobCard renders all required fields**
     - **Validates: Requirements 4.2**
 
-  - [~] 12.5 Write property test for StatusBadge distinct styling per status
+  - [x] 12.5 Write property test for StatusBadge distinct styling per status
     - Use `@fast-check/vitest`; for any two distinct `JobStatus` values assert the rendered badge CSS class differs
     - `# Feature: kazibot, Property 9: StatusBadge uses distinct styling per status`
     - **Property 9: StatusBadge uses distinct styling per status**
     - **Validates: Requirements 4.3**
 
-- [~] 13. Frontend — Job Feed page
+- [x] 13. Frontend — Job Feed page
   - Implement `frontend/src/pages/JobFeed.tsx`: fetch `/api/jobs` with React Query; render responsive grid of `JobCard` components; "Run Scraper" button posts to `/api/scrape` and invalidates query on success; "Skip" and "Applied" buttons call `PATCH /api/jobs/{id}/status`; navigate to `ReviewPortal` on card click
   - _Requirements: 4.1, 4.4, 4.5, 4.6, 4.7_
 
-- [~] 14. Frontend — Review Portal page
+- [x] 14. Frontend — Review Portal page
   - Implement `frontend/src/pages/ReviewPortal.tsx`: fetch `/api/jobs/{id}` with React Query; two-column layout (job description read-only | editable `<textarea>` for email); display title, company, deadline prominently; "Generate" button (when `pending_ai`) calls `POST /api/ai/generate/{id}`; "Push to Gmail Drafts" button calls `POST /api/drafts/{id}`, is disabled while loading, shows success/error toasts via `react-hot-toast`; updates visible `Job_Status` on success
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7_
 
-- [~] 15. Frontend — Profile Settings page
+- [x] 15. Frontend — Profile Settings page
   - Implement `frontend/src/pages/ProfileSettings.tsx`: form for resume Markdown, tech stack, GitHub URL, portfolio URL, LLM provider selector, and API key field; fetch `/api/profile` on mount; `PUT /api/profile` on save; mask API key after save (display `****…<last4>`); "Connect Gmail" button navigates to `/api/auth/gmail`
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
 
-- [~] 16. Frontend — routing and app shell
+- [x] 16. Frontend — routing and app shell
   - Implement `frontend/src/App.tsx`: define React Router v6 routes for `/`, `/review/:id`, `/profile`; add global `QueryClientProvider` and `Toaster`; add navigation header/sidebar linking all three pages
   - _Requirements: 4.4, 6.1_
 
-- [~] 17. Checkpoint — full frontend
+- [x] 17. Checkpoint — full frontend
   - Ensure all Vitest tests pass, ask the user if questions arise.
 
 - [ ] 18. Integration tests — end-to-end backend flows
-  - [~] 18.1 Scraper → Database integration test
+  - [ ] 18.1 Scraper → Database integration test
     - Serve fixture HTML via an embedded HTTP server; run `ScraperOrchestrator` against it; verify listings are persisted and a second run produces no duplicates
     - _Requirements: 1.1, 1.7, 7.4_
 
