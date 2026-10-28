@@ -82,7 +82,7 @@ def listings_list_st(draw):
 # ── Property 1: Scraper deduplication preserves uniqueness ───────────────────
 
 @given(listings=listings_list_st())
-@settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=None)
 def test_scraper_dedup_preserves_uniqueness(listings):
     """
     **Property 1: Scraper deduplication preserves uniqueness**

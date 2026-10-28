@@ -122,7 +122,7 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
 - [x] 6. Checkpoint — scraper layer
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. AI cover letter generation service
+- [x] 7. AI cover letter generation service
   - [x] 7.1 Implement `LLMProvider` protocol and concrete providers
     - Create `backend/services/ai_tailor.py`: define `LLMProvider` protocol with `async complete(prompt: str) -> str`
     - Implement `OpenAIProvider` and `AnthropicProvider`; select active provider at startup from `LLM_PROVIDER` env var
@@ -146,7 +146,7 @@ KaziBot is implemented as a Python FastAPI backend + React/TypeScript frontend. 
     - Wire router into `backend/main.py`
     - _Requirements: 2.1, 2.7_
 
-  - [-] 7.5 Write unit tests for AI_Tailor (mock LLM client)
+  - [x] 7.5 Write unit tests for AI_Tailor (mock LLM client)
     - Mock the HTTP client for both OpenAI and Anthropic; assert prompt construction and response handling; assert error responses keep job in `pending_ai` status
     - _Requirements: 2.7_
 

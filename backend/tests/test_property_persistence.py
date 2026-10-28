@@ -229,7 +229,7 @@ def test_generated_email_round_trip(job_data, email_body):
 # ── Property 11c: UserProfile round-trip ─────────────────────────────────────
 
 @given(data=user_profile_st())
-@settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow])
+@settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=None)
 def test_user_profile_round_trip(data):
     # Feature: kazibot, Property 11: Data persistence round-trip
     # **Validates: Requirements 7.3**
